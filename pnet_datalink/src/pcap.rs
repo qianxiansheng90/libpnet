@@ -24,6 +24,8 @@ pub struct Config {
 
     /// Promiscuous mode.
     pub promiscuous: bool,
+
+    pub filter: &str,
 }
 
 impl<'a> From<&'a super::Config> for Config {
@@ -32,6 +34,7 @@ impl<'a> From<&'a super::Config> for Config {
             read_buffer_size: config.read_buffer_size,
             read_timeout: config.read_timeout,
             promiscuous: config.promiscuous,
+            filter: config.filter,
         };
         // pcap is unique in that the buffer size must be greater or equal to
         // MAXIMUM_SNAPLEN, which is currently hard-coded to 65536
@@ -50,6 +53,7 @@ impl Default for Config {
             read_buffer_size: 0,
             read_timeout: None,
             promiscuous: true,
+            filter: "",
         }
     }
 }
@@ -62,6 +66,7 @@ pub fn channel(network_interface: &NetworkInterface, config: Config) -> io::Resu
         Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e)),
     }
     .buffer_size(config.read_buffer_size as i32);
+
     // Set pcap timeout (in milliseconds).
     // For conversion .as_millis() method could be used as well, but might have
     // a small performance impact as it uses u128 as return type
@@ -75,6 +80,12 @@ pub fn channel(network_interface: &NetworkInterface, config: Config) -> io::Resu
         Ok(cap) => cap,
         Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e)),
     };
+    // 添加filter
+    let cap = match config.filter {
+        "" => cap,
+        Some(f) => cap.filter(config.filter,true)
+    };
+
     let cap = Arc::new(Mutex::new(cap));
     Ok(Ethernet(
         Box::new(DataLinkSenderImpl {

@@ -154,6 +154,8 @@ pub struct Config {
     pub linux_fanout: Option<FanoutOption>,
 
     pub promiscuous: bool,
+
+    pub filter:&'static str,
 }
 
 impl Default for Config {
@@ -167,6 +169,7 @@ impl Default for Config {
             bpf_fd_attempts: 1000,
             linux_fanout: None,
             promiscuous: true,
+            filter: "",
         }
     }
 }
